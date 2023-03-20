@@ -1,9 +1,9 @@
-FROM ubuntu:20.04
+FROM debian:11
 
-LABEL org.opencontainers.image.title="Homebridge in Docker"
-LABEL org.opencontainers.image.description="Official Homebridge Docker Image"
-LABEL org.opencontainers.image.authors="oznu"
-LABEL org.opencontainers.image.url="https://github.com/oznu/docker-homebridge"
+LABEL org.opencontainers.image.title="x86_64 Optimized Homebridge in Docker"
+LABEL org.opencontainers.image.description="x86_64 FFMPEG enabled Homebridge Docker Image"
+LABEL org.opencontainers.image.authors="jasworks"
+LABEL org.opencontainers.image.url="https://github.com/jasworks/docker-homebridge"
 LABEL org.opencontainers.image.licenses="GPL-3.0"
 
 ENV S6_OVERLAY_VERSION=3.1.1.2 \
@@ -17,14 +17,32 @@ ENV S6_OVERLAY_VERSION=3.1.1.2 \
  HOME="/home/homebridge" \
  npm_config_prefix=/opt/homebridge
 
+
+#RUN set -x \
+#  && apt-get update \
+#  && apt-get install software-properties-common
+
+
+RUN sed -i -e's/ main/ main contrib non-free/g' /etc/apt/sources.list
+
 RUN set -x \
   && apt-get update \
   && apt-get install -y curl wget tzdata locales psmisc procps iputils-ping logrotate \
     libatomic1 apt-transport-https apt-utils jq openssl sudo nano net-tools \
   && locale-gen en_US.UTF-8 \
-  && ln -snf /usr/share/zoneinfo/Etc/GMT /etc/localtime && echo Etc/GMT > /etc/timezone \
-  && apt-get install -y python3 python3-pip python3-setuptools git python make g++ libnss-mdns \
-    avahi-discover libavahi-compat-libdnssd-dev \
+  && ln -snf /usr/share/zoneinfo/Etc/GMT /etc/localtime && echo Etc/GMT > /etc/timezone
+
+RUN set -x \
+  && apt-get install -y python3-minimal python3-pip python3-setuptools
+
+RUN set -x \
+  && apt-get install -y git make g++ libnss-mdns \
+    avahi-discover libavahi-compat-libdnssd-dev
+
+RUN set -x \
+  && apt-get install -y libva2 ffmpeg vainfo intel-media-va-driver-non-free
+
+RUN set -x \
   && pip3 install tzupdate \
   && chmod 4755 /bin/ping \
   && apt-get clean \
