@@ -1,5 +1,7 @@
 #!/command/with-contenv sh
 
-[ -e /homebridge/homebridge.log ] || touch /homebridge/homebridge.log
+[ -e /homebridge/lib/homebridge.log ] || touch /homebridge/lib/homebridge.log
 
-exec tail -f --follow=name /homebridge/homebridge.log
+chown homebridge:homebridge /homebridge/lib/homebridge.log
+
+exec tail -f --follow=name /homebridge/lib/homebridge.log
