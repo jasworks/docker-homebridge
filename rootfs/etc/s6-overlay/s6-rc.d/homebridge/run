@@ -1,6 +1,6 @@
 #!/command/with-contenv sh
 
-export HOME=/home/homebridge
+export HOME=/homebridge/lib
 export USER=homebridge
 export HOMEBRIDGE_CONFIG_UI=1
 
