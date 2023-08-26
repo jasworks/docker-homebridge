@@ -1,21 +1,21 @@
 #!/command/with-contenv sh
 
 # make folders
-#mkdir -p /var/run/dbus
-#mkdir -p /var/run/avahi-daemon
+mkdir -p /var/run/dbus
+mkdir -p /var/run/avahi-daemon
 
 HB_BASE=/homebridge/lib
 
-# delete existing pid if found
-#[ -e /var/run/dbus.pid ] && rm -f /var/run/dbus.pid
-#[ -e /var/run/dbus/pid ] && rm -f /var/run/dbus/pid
-#[ -e /var/run/avahi-daemon/pid ] && rm -f /var/run/avahi-daemon/pid
+ delete existing pid if found
+[ -e /var/run/dbus.pid ] && rm -f /var/run/dbus.pid
+[ -e /var/run/dbus/pid ] && rm -f /var/run/dbus/pid
+[ -e /var/run/avahi-daemon/pid ] && rm -f /var/run/avahi-daemon/pid
 
 # service permissions
-#chown messagebus:messagebus /var/run/dbus
-#chown avahi:avahi /var/run/avahi-daemon
-#dbus-uuidgen --ensure
-#sleep 1
+chown messagebus:messagebus /var/run/dbus
+chown avahi:avahi /var/run/avahi-daemon
+dbus-uuidgen --ensure
+sleep 1
 
 # avahi config
 cp /defaults/avahi-daemon.conf /etc/avahi/avahi-daemon.conf

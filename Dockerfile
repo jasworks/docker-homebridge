@@ -1,6 +1,6 @@
 FROM debian:11-slim AS ffmpeg
 
-RUN apt-get update && apt-get install -y --no-install-recommends curl build-essential libva-dev vainfo git ca-certificates
+RUN apt-get update && apt-get install -y --no-install-recommends curl build-essential libva-dev vainfo git ca-certificates ninja-build meson libmfx-dev
 WORKDIR /
 
 RUN git clone https://github.com/jasworks/ffmpeg-build-script.git \
@@ -14,9 +14,10 @@ LABEL org.opencontainers.image.authors="jasworks"
 LABEL org.opencontainers.image.url="https://github.com/jasworks/docker-homebridge"
 LABEL org.opencontainers.image.licenses="GPL-3.0"
 
-ENV S6_OVERLAY_VERSION=3.1.1.2 \
+ENV S6_OVERLAY_VERSION=3.1.5.0 \
  S6_CMD_WAIT_FOR_SERVICES_MAXTIME=0 \
  S6_KEEP_ENV=1 \
+ ENABLE_AVAHI=1 \
  LANG=C.UTF-8 \
  USER=homebridge \
  HOMEBRIDGE_APT_PACKAGE=1 \
@@ -26,23 +27,22 @@ ENV S6_OVERLAY_VERSION=3.1.1.2 \
  npm_config_prefix=/opt/homebridge
 
 
-RUN sed -i -e's/ main/ main contrib non-free/g' /etc/apt/sources.list
-
 RUN set -x \
+  && sed -i -e's/ main/ main contrib non-free/g' /etc/apt/sources.list \
+  && sleep 1 \
   && apt-get update \
   && apt-get install -y --no-install-recommends curl wget tzdata locales psmisc procps iputils-ping logrotate \
     libatomic1 apt-transport-https apt-utils jq openssl sudo net-tools ca-certificates \
-    git make g++ \
-    libva2 intel-media-va-driver-non-free xz-utils python3 python3-pip python3-setuptools vim libva-drm2 \
+    git make g++ libnss-mdns libavahi-compat-libdnssd-dev \
+    libva2 libmfx1 intel-media-va-driver-non-free xz-utils python3 python3-pip python3-setuptools vim libva-drm2 \
+  && apt-get install -y --no-install-recommends python3-dateutil python3-urllib3 python3-requests expect openssh-client \
   && locale-gen en_US.UTF-8 \
-  && ln -snf /usr/share/zoneinfo/Etc/GMT /etc/localtime && echo Etc/GMT > /etc/timezone
-
-RUN set -x \ 
-  && pip3 install tzupdate argparse python-dateutil urllib3 requests && pip3 cache purge
-
-RUN set -x \
+  && ln -snf /usr/share/zoneinfo/Etc/GMT /etc/localtime && echo Etc/GMT > /etc/timezone \
+  &&  apt-get -y autoremove && apt-get clean \
+  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/* \
+  && rm -rf /etc/cron.daily/apt-compat /etc/cron.daily/dpkg /etc/cron.daily/passwd /etc/cron.daily/exim4-base \
+  && pip3 install tzupdate && pip3 cache purge \
   && chmod 4755 /bin/ping
-
   
 RUN case "$(uname -m)" in \
     x86_64) S6_ARCH='x86_64';; \
@@ -62,7 +62,7 @@ RUN case "$(uname -m)" in \
   && set -x \
   && curl -Lfs https://github.com/homebridge/ffmpeg-for-homebridge/releases/download/v0.1.0/ffmpeg-debian-${FFMPEG_ARCH}.tar.gz | tar xzf - -C / --no-same-owner
 
-ENV HOMEBRIDGE_PKG_VERSION=1.0.33
+ENV HOMEBRIDGE_PKG_VERSION=1.0.34
 
 RUN case "$(uname -m)" in \
     x86_64) DEB_ARCH='amd64';; \
@@ -77,13 +77,12 @@ RUN case "$(uname -m)" in \
 COPY rootfs /
 
 COPY --from=ffmpeg /ffmpeg-build-script/workspace/bin/ffmpeg /usr/bin/ffmpeg
-RUN groupmod -g 5002 homebridge
-RUN usermod -d /homebridge/lib -u 5002 -g 5002 homebridge
 
+RUN set -x &&  groupmod -g 5002 homebridge && usermod -d /homebridge/lib -u 5002 -g 5002 homebridge && groupmod -g 5003 messagebus && groupmod -g 5004 avahi && usermod -u 5003 -g 5003 messagebus && usermod -u 5004 -g 5004 avahi
 
-RUN apt-get -y autoremove && apt-get clean \
-  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/* \
-  && rm -rf /etc/cron.daily/apt-compat /etc/cron.daily/dpkg /etc/cron.daily/passwd /etc/cron.daily/exim4-base
+#RUN apt-get -y autoremove && apt-get clean \
+#  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/* \
+#  && rm -rf /etc/cron.daily/apt-compat /etc/cron.daily/dpkg /etc/cron.daily/passwd /etc/cron.daily/exim4-base
 
 EXPOSE 8581/tcp
 VOLUME /homebridge
