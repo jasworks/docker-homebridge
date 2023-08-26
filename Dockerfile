@@ -15,6 +15,20 @@ LABEL org.opencontainers.image.url="https://github.com/jasworks/docker-homebridg
 LABEL org.opencontainers.image.licenses="GPL-3.0"
 
 ENV S6_OVERLAY_VERSION=3.1.5.0 \
+FROM ubuntu:22.04
+
+LABEL org.opencontainers.image.title="Homebridge in Docker"
+LABEL org.opencontainers.image.description="Official Homebridge Docker Image"
+LABEL org.opencontainers.image.authors="homebridge"
+LABEL org.opencontainers.image.url="https://github.com/homebridge/docker-homebridge"
+LABEL org.opencontainers.image.licenses="GPL-3.0"
+
+# update to latest releases prior to release
+
+ENV HOMEBRIDGE_PKG_VERSION=1.0.34 \
+  FFMPEG_VERSION=v0.1.0
+
+ENV S6_OVERLAY_VERSION=3.1.1.2 \
  S6_CMD_WAIT_FOR_SERVICES_MAXTIME=0 \
  S6_KEEP_ENV=1 \
  ENABLE_AVAHI=1 \
@@ -43,6 +57,13 @@ RUN set -x \
   && rm -rf /etc/cron.daily/apt-compat /etc/cron.daily/dpkg /etc/cron.daily/passwd /etc/cron.daily/exim4-base \
   && pip3 install tzupdate && pip3 cache purge \
   && chmod 4755 /bin/ping
+  && apt-get install -y python3 python3-pip python3-setuptools git make g++ libnss-mdns \
+    avahi-discover libavahi-compat-libdnssd-dev \
+  && pip3 install tzupdate \
+  && chmod 4755 /bin/ping \
+  && apt-get clean \
+  && rm -rf /tmp/* /var/lib/apt/lists/* /var/tmp/* \
+  && rm -rf /etc/cron.daily/apt-compat /etc/cron.daily/dpkg /etc/cron.daily/passwd /etc/cron.daily/exim4-base
   
 RUN case "$(uname -m)" in \
     x86_64) S6_ARCH='x86_64';; \
@@ -63,6 +84,8 @@ RUN case "$(uname -m)" in \
   && curl -Lfs https://github.com/homebridge/ffmpeg-for-homebridge/releases/download/v0.1.0/ffmpeg-debian-${FFMPEG_ARCH}.tar.gz | tar xzf - -C / --no-same-owner
 
 ENV HOMEBRIDGE_PKG_VERSION=1.0.34
+=======
+  && curl -Lfs https://github.com/homebridge/ffmpeg-for-homebridge/releases/download/${FFMPEG_VERSION}/ffmpeg-debian-${FFMPEG_ARCH}.tar.gz | tar xzf - -C / --no-same-owner
 
 RUN case "$(uname -m)" in \
     x86_64) DEB_ARCH='amd64';; \
